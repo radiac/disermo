@@ -3,6 +3,7 @@
 Example Disermo script
 """
 from __future__ import annotations
+import sys
 
 import click
 
@@ -16,21 +17,22 @@ email = notifiers.Email(
     to_addr='user@example.com',
     after=3,
 )
+cli = notifiers.Stream(sys.stdout)
 
 
 MyServer = Node('My server').add(
     Check('Storage').add(
-        checks.storage.FreeSpace(drive='/dev/sd0'),
+        checks.storage.FreeSpace(drive='/dev/sda1'),
     ),
     Check('CPU').add(
         checks.sensors.CPUTemperature(),
         checks.system.Load(),
     ),
-).notify(email)
+).notify(cli)
 
 
 @click.command()
-def disermo(config_path: str):
+def disermo():
     MyServer.check(storage=store)
 
 

@@ -56,12 +56,20 @@ class Check:
         return self
 
     def run(self) -> Status:
+        """
+        Run the check of this node, and of all its subchecks
+
+        The resulting status is the worst status for this node and all subnodes
+        """
         self.update()
         worst: Status = self.status
         for check in self.subchecks:
             result: Status = check.run()
             if result > worst:
                 worst = result
+
+        # The status of this node is the worst found
+        self.status = worst
         return worst
 
     def update(self) -> None:

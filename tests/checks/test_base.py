@@ -114,6 +114,7 @@ class TestSubcheck:
             ),
         )
         assert tree.run() == Status.OK
+        assert tree.status == Status.OK
 
     def test_subcheck_bubbles_worst__worst_is_grandchild(self):
         tree = MockCheck(Status.DISABLED).add(
@@ -122,6 +123,7 @@ class TestSubcheck:
             ),
         )
         assert tree.run() == Status.WARN
+        assert tree.status == Status.WARN
 
     def test_subcheck_bubbles_worst__worst_is_child_sibling(self):
         tree = MockCheck(Status.DISABLED).add(
@@ -131,6 +133,7 @@ class TestSubcheck:
             MockCheck(Status.ERROR),
         )
         assert tree.run() == Status.ERROR
+        assert tree.status == Status.ERROR
 
 
 class TestNotify:

@@ -15,16 +15,15 @@ class Storage:
     data: DefaultDict[str, List[Status]]
     max_memory: int
 
-    def __init__(self, path: str, max_memory: int = 10) -> None:
-        self.path = path
+    def __init__(self, max_memory: int = 10) -> None:
         self.data = defaultdict(list)
         self.max_memory = max_memory
 
     def load(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def save(self) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def set(self, key: str, status: Status) -> None:
         """
@@ -34,7 +33,7 @@ class Storage:
 
         # Assert max memory
         if len(self.data[key]) > self.max_memory:
-            self.data[key] = self.data[key][self.max_memory:]
+            self.data[key] = self.data[key][-self.max_memory:]
 
     def latest(self, key: str, count: int) -> List[Status]:
         """

@@ -5,14 +5,14 @@ from email.mime.text import MIMEText
 import smtplib
 from typing import TYPE_CHECKING, List, Tuple
 
-from .base import Notifier
+from .base import TrendNotifier
 
 if TYPE_CHECKING:
     from ..checks import Check
     from ..node import Node
 
 
-class Email(Notifier):
+class Email(TrendNotifier):
     to_addr: str
     from_addr: str
 
@@ -32,25 +32,17 @@ class Email(Notifier):
         )
 
         # Generate full labels
-        searching: List[Tuple[Check, List[str]]] = [(node, [node.label])]
-        found: List[Tuple[Check, List[str]]] = []
-        while searching:
-            # Look at next and search its children
-            check, label = searching.pop()
-            searching.extend([
-                (subcheck, label + [subcheck.label])
-                for subcheck in check.subchecks
-            ])
-
-            # See if we've found one
-            if check in checks:
-                found.append((check, label))
+        found: List[Tuple[Check, List[str]]] = [
+            (check, label)
+            for check, label in node.iter_flat_labelled_checks()
+            if check in checks
+        ]
 
         # Render summary
         summary = '\n'.join([
             self.template_body_summary.format(
                 check=' > '.join(label),
-                status=check.status
+                status=check.status.name.title(),
             )
             for check, label in found
         ])
