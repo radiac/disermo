@@ -8,7 +8,7 @@ import re
 _re_camel_to_sentence = re.compile(r'([A-Z]+(?=[A-Z][a-z]|$)|[A-Z][a-z])')
 
 
-class OrderedEnum(Enum):
+class OrderedEnum(Enum):  # pragma: no cover - comes from python docs
     """
     Ordered enum to allow value comparison, from python docs
     """
@@ -39,6 +39,9 @@ def camel_to_sentence(val: str) -> str:
 
     It is acroynm-aware
     """
+    if not val:
+        return ''
+
     words = [
         word if all([char.isupper() for char in word]) else word.lower()
         for word in _re_camel_to_sentence.sub(r' \1', val).split(' ')
@@ -46,7 +49,4 @@ def camel_to_sentence(val: str) -> str:
     ]
 
     sentence = ' '.join(words)
-    if not sentence:
-        return sentence
-
     return f'{sentence[0].upper()}{sentence[1:]}'

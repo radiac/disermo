@@ -21,6 +21,11 @@ class MockNotifier(Notifier):
         self.sent = checks
 
 
+def test_check_disabled():
+    # Other tests assume this
+    assert Check().status == Status.DISABLED
+
+
 def test_notifier_process__sends_check():
     notifier = MockNotifier()
     storage = Storage()
@@ -42,18 +47,38 @@ def test_trendnotifier_process__not_enough_to_find_trend__test_fails():
     assert notifier.test(storage, check) is False
 
 
-def test_trendnotifier_process__oldest_matches__test_fails():
-    notifier = TrendNotifier(after=1)
+def test_trendnotifier_process__continues_trend__test_fails():
+    notifier = TrendNotifier(after=3)
     storage = Storage()
-    storage.data['check'] = [Status.DISABLED]
+    storage.data['check'] = [(Status.DISABLED, 3)]
     check = Check()
     assert notifier.test(storage, check) is False
+
+
+def test_trendnotifier_process__continues_large_trend__test_fails():
+    """
+    Same as test_trendnotifier_process__continues_trend__test_fails
+    just testing bounds
+    """
+    notifier = TrendNotifier(after=3)
+    storage = Storage()
+    storage.data['check'] = [(Status.DISABLED, 30)]
+    check = Check()
+    assert notifier.test(storage, check) is False
+
+
+def test_trendnotifier_process__no_stack_new_trend_after_one__test_passes():
+    notifier = TrendNotifier(after=1)
+    storage = Storage()
+    storage.data['check'] = []
+    check = Check()
+    assert notifier.test(storage, check) is True
 
 
 def test_trendnotifier_process__new_trend_after_one__test_passes():
     notifier = TrendNotifier(after=1)
     storage = Storage()
-    storage.data['check'] = [Status.OK]
+    storage.data['check'] = [(Status.OK, 1)]
     check = Check()
     assert notifier.test(storage, check) is True
 
@@ -61,7 +86,9 @@ def test_trendnotifier_process__new_trend_after_one__test_passes():
 def test_trendnotifier_process__new_trend_after_more__test_passes():
     notifier = TrendNotifier(after=3)
     storage = Storage()
-    storage.data['check'] = [Status.OK, Status.DISABLED, Status.DISABLED]
+    storage.data['check'] = [
+        (Status.OK, 1), (Status.DISABLED, 2),
+    ]
     check = Check()
     assert notifier.test(storage, check) is True
 
@@ -69,6 +96,65 @@ def test_trendnotifier_process__new_trend_after_more__test_passes():
 def test_trendnotifier_process__flipping_value__test_fails():
     notifier = TrendNotifier(after=3)
     storage = Storage()
-    storage.data['check'] = [Status.OK, Status.DISABLED, Status.OK]
+    storage.data['check'] = [
+        (Status.OK, 1), (Status.DISABLED, 1), (Status.OK, 1),
+    ]
     check = Check()
     assert notifier.test(storage, check) is False
+
+
+def test_trendnotifier_process__single_value_oldest__test_passes():
+    """
+    The oldest check was a flipped value which didn't form a trend, but the
+    new one does - new trend
+    """
+    notifier = TrendNotifier(after=3)
+    storage = Storage()
+    storage.data['check'] = [
+        (Status.DISABLED, 1), (Status.OK, 1), (Status.DISABLED, 2),
+    ]
+    check = Check()
+    assert notifier.test(storage, check) is True
+
+
+def test_trendnotifier_process__old_trend__test_fails():
+    """
+    The oldest check was a flipped value which did form a trend; the new one
+    is effectively a continuation of the old trend and should not trigger.
+    """
+    notifier = TrendNotifier(after=3)
+    storage = Storage()
+    storage.data['check'] = [
+        (Status.DISABLED, 3), (Status.OK, 1), (Status.DISABLED, 2),
+    ]
+    check = Check()
+    assert notifier.test(storage, check) is False
+
+
+def test_trendnotifier_process__old_large_trend__test_fails():
+    """
+    Same as test_trendnotifier_process__old_trend__test_fails, just checking
+    bounds
+    """
+    notifier = TrendNotifier(after=3)
+    storage = Storage()
+    storage.data['check'] = [
+        (Status.DISABLED, 30), (Status.OK, 1), (Status.DISABLED, 2),
+    ]
+    check = Check()
+    assert notifier.test(storage, check) is False
+
+
+def test_trendnotifier_process__flip_but_old_trend_different__test_passes():
+    """
+    There is an old trend which was flipped to a new state which was too short
+    to trigger a new trend, but this new trend does not match the old one - so
+    should be detected as a new trend
+    """
+    notifier = TrendNotifier(after=3)
+    storage = Storage()
+    storage.data['check'] = [
+        (Status.ERROR, 3), (Status.OK, 1), (Status.DISABLED, 2),
+    ]
+    check = Check()
+    assert notifier.test(storage, check) is True

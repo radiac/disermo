@@ -17,6 +17,11 @@ def write(path, lines):
             file.write(line)
 
 
+def test_confirm_separator():
+    # Tests will assume this
+    assert CSV.SEPARATOR == '|'
+
+
 def test_save(tmp_path):
     test_file = tmp_path / 'test.csv'
     storage = CSV(path=test_file)
@@ -24,7 +29,7 @@ def test_save(tmp_path):
     storage.save()
 
     assert read(test_file) == [
-        'key,1\n',
+        'key,1|1\n',
     ]
 
 
@@ -36,7 +41,7 @@ def test_save_multiple__appended(tmp_path):
     storage.save()
 
     assert read(test_file) == [
-        'key,1,2\n',
+        'key,1|1,2|1\n',
     ]
 
 
@@ -49,24 +54,24 @@ def test_save_different__all_set(tmp_path):
     storage.save()
 
     assert read(test_file) == [
-        'key1,1,2\n',
-        'key2,3\n',
+        'key1,1|1,2|1\n',
+        'key2,3|1\n',
     ]
 
 
 def test_load(tmp_path):
     test_file = tmp_path / 'test.csv'
     write(test_file, [
-        'key1,1,2\n',
-        'key2,3\n',
+        'key1,1|1,2|1\n',
+        'key2,3|1\n',
     ])
 
     storage = CSV(path=test_file)
     storage.load()
 
     assert storage.data == {
-        'key1': [Status.OK, Status.WARN],
-        'key2': [Status.ERROR],
+        'key1': [(Status.OK, 1), (Status.WARN, 1)],
+        'key2': [(Status.ERROR, 1)],
     }
 
 

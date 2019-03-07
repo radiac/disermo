@@ -21,16 +21,18 @@ class Check:
     data: Dict[str, Any]
 
     def __init__(self, label: str = None) -> None:
-        self.uid = self.get_uid()
-
         if label is None:
             label = self.default_label
         self.label = label
+        self.uid = self.get_uid()
         self.subchecks = []
         self.notifiers = []
 
         self.status = Status.DISABLED
         self.data = {}
+
+    def __repr__(self):
+        return f'<{type(self).__name__}: {self.uid}>'
 
     @property
     def class_id(self) -> str:

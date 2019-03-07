@@ -30,8 +30,8 @@ class Node(Check):
         storage.load()
 
         # Call notifiers
-        for notifier, checks in notifiers.items():
-            notifier.process(self, storage, checks)
+        for notifier, notifier_checks in notifiers.items():
+            notifier.process(self, storage, notifier_checks)
 
         # Store statuses for trend spotting
         for check in checks:
@@ -46,8 +46,8 @@ class Node(Check):
         """
         checks: List[Check] = [self]
         while checks:
-            check = checks.pop()
-            checks.extend(check.subchecks)
+            check = checks.pop(0)
+            checks = check.subchecks + checks
             yield check
 
     def iter_flat_depth_checks(self) -> Iterator[Tuple[Check, int]]:
@@ -57,8 +57,11 @@ class Node(Check):
         """
         checks: List[Tuple[Check, int]] = [(self, 0)]
         while checks:
-            check, depth = checks.pop()
-            checks.extend([(check, depth + 1) for check in check.subchecks])
+            check, depth = checks.pop(0)
+            checks = [
+                (subcheck, depth + 1)
+                for subcheck in check.subchecks
+            ] + checks
             yield (check, depth)
 
     def iter_flat_labelled_checks(self) -> Iterator[Tuple[Check, List[str]]]:
@@ -67,14 +70,14 @@ class Node(Check):
         tree, starting with self, where ``labels`` is a list of all parent
         labels, in order oldest first
         """
-        searching: List[Tuple[Check, List[str]]] = [(self, [self.label])]
-        while searching:
+        checks: List[Tuple[Check, List[str]]] = [(self, [self.label])]
+        while checks:
             # Look at next and search its children
-            check, label = searching.pop()
-            searching.extend([
+            check, label = checks.pop(0)
+            checks = [
                 (subcheck, label + [subcheck.label])
                 for subcheck in check.subchecks
-            ])
+            ] + checks
 
             # See if we've found one
             yield (check, label)

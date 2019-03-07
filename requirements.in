@@ -4,6 +4,7 @@ pytest
 pytest-mypy
 pytest-flake8
 pytest-cov
+typing_extensions
 
 click
 requests

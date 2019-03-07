@@ -7,7 +7,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..checks import Check
     from ..constants import Status
     from ..node import Node
-    from ..storage import Storage
+    from ..storage import Storage, GroupedStatus
 
 
 DEFAULT_TREND_LIMIT = 5
@@ -58,27 +58,51 @@ class TrendNotifier(Notifier):
 
         Looking for a change which occurred {self.after} ago
         """
+        print('CAKE')
         uid: str = check.uid
         status: Status = check.status
+        generator: GroupedStatus = storage.get(key=uid, grouped=True)
 
-        # Check the latest statuses to look for a trend
-        latest = storage.latest(uid, self.after)
-        if len(latest) < self.after:
-            # Not enough to spot a trend
+        # Get first (newest) status
+        first_status: Status
+        first_count: int
+        try:
+            first_status, first_count = next(generator)
+        except StopIteration:
+            # Nothing on the stack
+            if self.after <= 1:
+                return True
             return False
 
-        # If the first matches now, no trend
-        if latest[0] == status:
-            return False
+        # See if this is starting or continuing a trend
+        if first_status == status:
+            if first_count >= self.after:
+                # Continuing trend - no change
+                return False
 
-        # If first doesn't match and trend is 1, found new trend
-        if len(latest) == 1:
-            return True
+            elif first_count + 1 == self.after:
+                # This next one will start a new trend
+                # But what about the previous trend; is this actually a change?
+                past_status: Status
+                past_count: int
+                for past_status, past_count in generator:
+                    if past_count >= self.after:
+                        # Found the previous trend
+                        if past_status == status:
+                            # This is returning to an old trend - no change
+                            return False
+                        else:
+                            # This is starting a new trend
+                            return True
 
-        # However, if first doesn't match but the others do, found new trend
-        others = list(set(latest[1:]))
-        if len(others) == 1 and others[0] == status:
-            return True
+                # Haven't found a previous trend - this is starting a new one
+                return True
 
-        # No new trend
+        else:
+            # Status doesn't match, it can't be a trend...
+            if self.after <= 1:
+                # ... unless we start a new trend immediately
+                return True
+
+        # Have not started a new trend yet - either a new status, or not enough
         return False

@@ -37,6 +37,10 @@ class TestInit:
         check = Check()
         assert check.uid == 'check'
 
+    def test_repr(self):
+        check = Check()
+        assert repr(check) == '<Check: check>'
+
     def test_default_label(self):
         check = Check()
         assert check.default_label == 'Check'

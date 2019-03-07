@@ -5,6 +5,13 @@ from disermo.utils import camel_to_sentence
 
 
 class TestCamelToSentence:
+    def test_none(self):
+        # Invalid when type checking, but test it anyway
+        assert camel_to_sentence(None) == ''
+
+    def test_empty(self):
+        assert camel_to_sentence('') == ''
+
     def test_word(self):
         assert camel_to_sentence('word') == 'Word'
 

@@ -8,14 +8,21 @@ from disermo.storage.base import Storage
 def test_set():
     storage = Storage()
     storage.set('key', Status.OK)
-    assert storage.data == {'key': [Status.OK]}
+    assert storage.data == {'key': [(Status.OK, 1)]}
 
 
-def test_set_multiple__appended():
+def test_set_multiple_different__appended():
     storage = Storage()
     storage.set('key', Status.OK)
     storage.set('key', Status.WARN)
-    assert storage.data == {'key': [Status.OK, Status.WARN]}
+    assert storage.data == {'key': [(Status.OK, 1), (Status.WARN, 1)]}
+
+
+def test_set_multiple_same__incremented():
+    storage = Storage()
+    storage.set('key', Status.OK)
+    storage.set('key', Status.OK)
+    assert storage.data == {'key': [(Status.OK, 2)]}
 
 
 def test_set_max__all_set():
@@ -23,15 +30,18 @@ def test_set_max__all_set():
     storage.set('key', Status.OK)
     storage.set('key', Status.WARN)
     storage.set('key', Status.ERROR)
-    assert storage.data == {'key': [Status.OK, Status.WARN, Status.ERROR]}
+    assert storage.data == {
+        'key': [(Status.OK, 1), (Status.WARN, 1), (Status.ERROR, 1)],
+    }
 
 
 def test_set_over_max__first_in_first_out():
     storage = Storage(max_memory=2)
     storage.set('key', Status.OK)
     storage.set('key', Status.WARN)
+    storage.set('key', Status.WARN)
     storage.set('key', Status.ERROR)
-    assert storage.data == {'key': [Status.WARN, Status.ERROR]}
+    assert storage.data == {'key': [(Status.WARN, 2), (Status.ERROR, 1)]}
 
 
 def test_set_different__all_set():
@@ -40,33 +50,31 @@ def test_set_different__all_set():
     storage.set('key1', Status.WARN)
     storage.set('key2', Status.ERROR)
     assert storage.data == {
-        'key1': [Status.OK, Status.WARN],
-        'key2': [Status.ERROR],
+        'key1': [(Status.OK, 1), (Status.WARN, 1)],
+        'key2': [(Status.ERROR, 1)],
     }
 
 
-def test_latest__count_matches__returns_all():
+def test_get__returns_all():
     storage = Storage()
     storage.set('key', Status.OK)
     storage.set('key', Status.WARN)
     storage.set('key', Status.ERROR)
-    latest = storage.latest('key', 3)
-    assert latest == [Status.OK, Status.WARN, Status.ERROR]
+    latest = storage.get('key')
+    assert list(latest) == [Status.ERROR, Status.WARN, Status.OK]
 
 
-def test_latest__count_under__returns_subset():
+def test_get_grouped__returns_groups():
     storage = Storage()
+    storage.set('key', Status.OK)
+    storage.set('key', Status.OK)
     storage.set('key', Status.OK)
     storage.set('key', Status.WARN)
     storage.set('key', Status.ERROR)
-    latest = storage.latest('key', 2)
-    assert latest == [Status.WARN, Status.ERROR]
-
-
-def test_latest__count_over__returns_all():
-    storage = Storage()
-    storage.set('key', Status.OK)
-    storage.set('key', Status.WARN)
     storage.set('key', Status.ERROR)
-    latest = storage.latest('key', 5)
-    assert latest == [Status.OK, Status.WARN, Status.ERROR]
+    latest = storage.get('key', grouped=True)
+    assert list(latest) == [
+        (Status.ERROR, 2),
+        (Status.WARN, 1),
+        (Status.OK, 3),
+    ]
