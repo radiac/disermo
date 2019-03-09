@@ -5,8 +5,6 @@ Example Disermo script
 from __future__ import annotations
 import sys
 
-import click
-
 from disermo import Node, Check, checks, notifiers, storage
 
 
@@ -28,10 +26,12 @@ MyServer = Node('My server').add(
         checks.sensors.CPUTemperature(),
         checks.system.Load(),
     ),
+    Check('Remote').add(
+        checks.remote.Web('http://example.com'),
+    ),
 ).notify(cli)
 
 
-@click.command()
 def disermo():
     MyServer.check(storage=store)
 
