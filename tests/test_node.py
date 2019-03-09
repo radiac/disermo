@@ -123,7 +123,8 @@ def test_check():
         'check 4': [(Status.DISABLED, 1)],
         'check 5': [(Status.DISABLED, 1)],
     }
-    assert notifierNode.stream.getvalue() == (
+
+    notification = (
         'node: Disabled\n'
         '  check 0: Disabled\n'
         '  check 1: Disabled\n'
@@ -132,3 +133,6 @@ def test_check():
         '    check 4: Disabled\n'
         '      check 5: Disabled\n'
     )
+    assert notifierNode.stream.getvalue() == notification
+    for i in range(6):
+        assert notifiers[i].stream.getvalue() == notification
