@@ -3,6 +3,7 @@ Generic utility functions
 """
 from enum import Enum
 import re
+import time
 
 
 _re_camel_to_sentence = re.compile(r'([A-Z]+(?=[A-Z][a-z]|$)|[A-Z][a-z])')
@@ -50,3 +51,11 @@ def camel_to_sentence(val: str) -> str:
 
     sentence = ' '.join(words)
     return f'{sentence[0].upper()}{sentence[1:]}'
+
+
+class Timer:
+    def __init__(self):
+        self.start = time.time()
+
+    def elapsed(self):
+        return time.time() - self.start

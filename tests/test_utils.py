@@ -1,7 +1,9 @@
 """
 Test disermo/util.py
 """
-from disermo.utils import camel_to_sentence
+from unittest import mock
+
+from disermo.utils import camel_to_sentence, Timer
 
 
 class TestCamelToSentence:
@@ -32,3 +34,9 @@ class TestCamelToSentence:
 
     def test_acroynm_end(self):
         assert camel_to_sentence('servesHTTP') == 'Serves HTTP'
+
+
+@mock.patch('time.time', mock.MagicMock(side_effect=[10.0, 20.0]))
+def test_timer():
+    timer = Timer()
+    assert timer.elapsed() == 10.0
