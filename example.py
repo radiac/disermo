@@ -5,8 +5,6 @@ Example Disermo script
 from __future__ import annotations
 import sys
 
-import click
-
 from disermo import Node, Check, checks, notifiers, storage
 
 
