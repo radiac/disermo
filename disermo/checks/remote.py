@@ -1,5 +1,5 @@
 """
-Checks which perform Remote requests
+Checks which perform remote requests
 """
 from dataclasses import dataclass, field
 from http.client import HTTPResponse
@@ -10,6 +10,10 @@ from urllib.error import HTTPError, URLError
 from ..constants import Status
 from ..utils import Timer
 from .base import Check
+
+
+# Default timeout, in seconds
+DEFAULT_TIMEOUT = 10
 
 
 @dataclass
@@ -41,13 +45,14 @@ class Web(Check):
     def __init__(
         self,
         url: str,
-        timeout: float,
         label: str = None,
+        timeout: float = DEFAULT_TIMEOUT,
         status_code: int = 200,
         content_contains: str = None,
     ):
         super().__init__(label)
         self.url = url
+        self.timeout = timeout
         self.status_code = status_code
         self.content_contains = content_contains
 
