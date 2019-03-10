@@ -26,6 +26,9 @@ class Email(TrendNotifier):
         self.from_addr = from_addr
 
     def send(self, node: 'Node', checks: 'List[Check]') -> None:
+        if not checks:
+            return
+
         subject = self.template_subject.format(
             name=node.label,
             status=node.status,

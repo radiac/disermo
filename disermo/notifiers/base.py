@@ -58,7 +58,6 @@ class TrendNotifier(Notifier):
 
         Looking for a change which occurred {self.after} ago
         """
-        print('CAKE')
         uid: str = check.uid
         status: Status = check.status
         generator: GroupedStatus = storage.get(key=uid, grouped=True)
